@@ -1,5 +1,5 @@
 # Estado do bootstrap
-Fase concluída: 2 (design + plano aprovados)   Próxima: 3 código (Task 1 do plano)   Atualizado: 2026-11-24
+Fase concluída: 3 (primeira fatia implementada, 33 testes, revisada)   Próxima: 4 .claude/ do projeto   Atualizado: 2026-11-24
 
 ## Decisões tomadas (não reperguntar)
 - Produto: tray pessoal Windows, bateria do mouse DELUX M900 Pro (receptor 1D57:FA65) e headset HyperX Cloud II Core Wireless (03F0:0995). Design: docs/superpowers/specs/2026-11-24-device-monitor-design.md
@@ -17,10 +17,16 @@ Fase concluída: 2 (design + plano aprovados)   Próxima: 3 código (Task 1 do p
 - Probe de referência: C:\Users\Muniz\AppData\Local\Temp\devmon-probe (Probe.cs + Hid.cs).
 
 ## Pendências do usuário
-- Criar repo no GitHub e dizer o nome (para o link do README).
+- Commitar o branch feat/primeira-fatia (blocos na conversa) e publicar Release com dist\Instalar-Monitor-de-Bateria.exe.
+- [M] Checar na mão: tirar o cabo do mouse com o monitor aberto (vira % sem raio), desligar o headset no meio (texto "Sem leitura"/"Receptor não encontrado", sem fechar), menu e Sair na bandeja.
+- Medir: o mouse sem fio manda report parado? Se sim, dá para mostrar "Sem leitura" com o mouse desligado (achado #3 da revisão).
 
 ## Verificado na doc
 - nada ainda (hooks da Fase 4 vão exigir code.claude.com/docs/en/hooks)
 
+## Fase 3 — notas
+- Sem /health, k6 nem EXAMPLE-TDD.md (versão enxuta; tests/Tests.cs é o exemplo vivo).
+- Minors adiados da revisão: Atualizar apaga o raio do headset por até 30 s; "Sem leitura" mantém lastMv; ícone fantasma após Kill; Uninstall sem try/catch; instalação parcial se falhar depois da cópia.
+
 ## Próximo passo exato
-- Carregar superpowers:executing-plans + superpowers:test-driven-development e executar a Task 1 de docs/superpowers/plans/2026-11-24-device-monitor.md (test.ps1 + parser do mouse).
+- Fase 4 enxuta: CLAUDE.md (<150 linhas, comandos test.ps1/build.ps1 via powershell.exe), rules tdd.md + ia-limites.md, hook PostToolUse rodando test.ps1 ao editar src/tests (conferir code.claude.com/docs/en/hooks antes).
