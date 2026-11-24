@@ -18,7 +18,7 @@ Critérios de aceite (cada um vira teste dos parsers ou checagem manual marcada 
 9. [M] Instalação por duplo clique: baixar `Instalar-Monitor-de-Bateria.exe` pelo link do README (vai para Downloads) e clicar. Rodando fora da pasta de instalação, o exe se copia para `%LOCALAPPDATA%\MonitorDeBateria\MonitorDeBateria.exe`, cria atalho no Menu Iniciar, liga "Iniciar com o Windows" (`HKCU\...\Run`), registra em "Aplicativos instalados" (`HKCU\...\Uninstall`, desinstalar = `--desinstalar`), abre o monitor e avisa "Instalado". Sem admin (tudo em HKCU/LocalAppData). Clicar de novo com versão já instalada = atualiza (fecha a instância aberta, substitui, reabre).
 10. [M] O README tem o link fixo `.../releases/latest/download/Instalar-Monitor-de-Bateria.exe`; o `build.ps1` gera o arquivo com esse nome.
 
-Leitura: mouse ouvindo o report empurrado (interface UsagePage `000A`); headset consulta `66 89` a cada 30s (UsagePage `FF13`, 62 bytes).
+Leitura: mouse ouvindo o report empurrado (interface UsagePage `000A`, 5 bytes) no cabo `1D57:FA73` se presente, senão no receptor `1D57:FA65` (no cabo o receptor fica mudo; medido: `03 30 40 03 64`); headset consulta `66 89` a cada 30s (UsagePage `FF13`, 62 bytes).
 
 ## Fora de escopo
 Faixa desenhada dentro da barra de tarefas (o projeto base tem; aqui ícone de bandeja basta), outros aparelhos, detecção genérica de qualquer marca, Bluetooth, instalador MSI/Inno Setup, assinatura do exe, publicação automática da Release pelo CI, auto-update, tema claro/escuro além do contraste do ícone.

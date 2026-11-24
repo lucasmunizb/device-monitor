@@ -11,14 +11,12 @@ Fase concluída: 2 (design aprovado)   Próxima: 2b plano → 3 código   Atuali
 - Dev no WSL: compilar/rodar via powershell.exe numa pasta do Windows (%TEMP% = /mnt/c/Users/Muniz/AppData/Local/Temp). csc não confia em caminho \\wsl$; copiar fontes antes.
 
 ## Medido no hardware (2026-11-24)
-- Mouse: interface UsagePage 000A, report 5 bytes `03 30 40 ESTADO PCT` (01 bateria, 02 cheio, 03 carregando — só 01 visto).
+- Mouse: interface UsagePage 000A, report 5 bytes `03 30 40 ESTADO PCT` (01 bateria, 02 cheio, 03 carregando). No cabo vira outro aparelho `1D57:FA73` (mesma interface 000A) e manda `03 30 40 03 64`; receptor FA65 fica mudo. Ler FA73 primeiro, depois FA65.
 - Headset: UsagePage FF13, in/out 62. Envia `66 89` → `66 89 HI LO PCT`; HI<<8|LO = mV. Cabo: +27 mV/10s; sem cabo: −25 mV/10s. Bytes 5+ lixo.
 - Probe de referência: C:\Users\Muniz\AppData\Local\Temp\devmon-probe (Probe.cs + Hid.cs).
 
 ## Pendências do usuário
 - Criar repo no GitHub e dizer o nome (para o link do README).
-- Ligar o cabo no mouse para confirmar estado 03.
-- git init (agente não commita).
 
 ## Verificado na doc
 - nada ainda (hooks da Fase 4 vão exigir code.claude.com/docs/en/hooks)
