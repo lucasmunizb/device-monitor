@@ -19,6 +19,15 @@ class Tray : IDisposable
         headset = new Slot("Headset", this);
         devices.MouseChanged += OnMouse;
         devices.HeadsetChanged += OnHeadset;
+
+        // Explorer cria a entrada do ícone só depois de ele aparecer; espera um pouco antes de promover
+        var promote = new Timer { Interval = 5000 };
+        promote.Tick += delegate
+        {
+            promote.Dispose();
+            try { Installer.PromoteTrayIcons(); } catch (Exception) { } // ícone escondido não vale derrubar o monitor
+        };
+        promote.Start();
     }
 
     void OnMouse(Reading r) { Post(() => mouse.Show(r)); }

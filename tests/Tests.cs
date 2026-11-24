@@ -78,5 +78,13 @@ static class Tests
         Eq(true, Installer.IsInstalledCopy(Installer.Target), "cópia instalada");
         Eq(true, Installer.IsInstalledCopy(Installer.Target.ToUpper()), "sem caixa");
         Eq(false, Installer.IsInstalledCopy(@"C:\Users\x\Downloads\Instalar-Monitor-de-Bateria.exe"), "downloads");
+
+        // valores reais de HKCU\Control Panel\NotifyIconSettings\<id> no Windows 11 (2026-11-24)
+        Eq(true, Installer.ShouldPromote(@"C:\Users\Muniz\AppData\Local\MonitorDeBateria\MonitorDeBateria.exe", null), "ícone escondido vira visível");
+        Eq(true, Installer.ShouldPromote(@"{F1B32785-6FBA-4FCF-9D55-7B8E7F157091}\MonitorDeBateria\monitordebateria.exe", null), "caminho com GUID de pasta");
+        Eq(false, Installer.ShouldPromote(@"C:\Users\Muniz\AppData\Local\MonitorDeBateria\MonitorDeBateria.exe", 0), "usuário escondeu: respeita");
+        Eq(false, Installer.ShouldPromote(@"C:\Users\Muniz\AppData\Local\Temp\devmon-app\Instalar-Monitor-de-Bateria.exe", null), "instalador não");
+        Eq(false, Installer.ShouldPromote(@"C:\Users\Muniz\AppData\Roaming\Telegram Desktop\Telegram.exe", null), "outro app não");
+        Eq(false, Installer.ShouldPromote(null, null), "entrada sem caminho");
     }
 }

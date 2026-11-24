@@ -72,6 +72,27 @@ static class Installer
             else k.DeleteValue(Name, false);
     }
 
+    // Windows 11 esconde ícone novo no "^". Explorer guarda cada ícone em NotifyIconSettings\<id>;
+    // IsPromoted=1 o põe na barra. Ausente = ninguém escolheu ainda; 0 = usuário escondeu, respeitar.
+    // shortcut: chave não documentada pela Microsoft; se sumir num update do Windows, o ícone só volta ao "^".
+    public static bool ShouldPromote(string executablePath, object isPromoted)
+    {
+        return isPromoted == null && executablePath != null
+            && executablePath.EndsWith(@"\MonitorDeBateria\MonitorDeBateria.exe", StringComparison.OrdinalIgnoreCase);
+    }
+
+    public static void PromoteTrayIcons()
+    {
+        using (var root = Registry.CurrentUser.OpenSubKey(@"Control Panel\NotifyIconSettings"))
+        {
+            if (root == null) return; // Windows 10: não existe, nada a fazer
+            foreach (var id in root.GetSubKeyNames())
+                using (var k = root.OpenSubKey(id, true))
+                    if (k != null && ShouldPromote(k.GetValue("ExecutablePath") as string, k.GetValue("IsPromoted")))
+                        k.SetValue("IsPromoted", 1, RegistryValueKind.DWord);
+        }
+    }
+
     static void KillOthers()
     {
         int self = Process.GetCurrentProcess().Id;
