@@ -1,5 +1,5 @@
 # Estado do bootstrap
-Fase concluída: 3 (primeira fatia implementada, 33 testes, revisada)   Próxima: 4 .claude/ do projeto   Atualizado: 2026-11-24
+Fase concluída: 4 (.claude/ enxuto)   Próxima: 7 verificação final enxuta (5/6 não se aplicam)   Atualizado: 2026-11-24
 
 ## Decisões tomadas (não reperguntar)
 - Produto: tray pessoal Windows, bateria do mouse DELUX M900 Pro (receptor 1D57:FA65) e headset HyperX Cloud II Core Wireless (03F0:0995). Design: docs/superpowers/specs/2026-11-24-device-monitor-design.md
@@ -22,11 +22,16 @@ Fase concluída: 3 (primeira fatia implementada, 33 testes, revisada)   Próxima
 - Medir: o mouse sem fio manda report parado? Se sim, dá para mostrar "Sem leitura" com o mouse desligado (achado #3 da revisão).
 
 ## Verificado na doc
-- nada ainda (hooks da Fase 4 vão exigir code.claude.com/docs/en/hooks)
+- hooks (code.claude.com/docs/en/hooks) em 2026-11-24: PostToolUse matcher Edit|Write, stdin tool_input.file_path, stdout {"decision":"block","reason"} com exit 0, timeout em segundos, ${CLAUDE_PROJECT_DIR}.
 
 ## Fase 3 — notas
 - Sem /health, k6 nem EXAMPLE-TDD.md (versão enxuta; tests/Tests.cs é o exemplo vivo).
 - Minors adiados da revisão: Atualizar apaga o raio do headset por até 30 s; "Sem leitura" mantém lastMv; ícone fantasma após Kill; Uninstall sem try/catch; instalação parcial se falhar depois da cópia.
 
+## Fase 4 — notas
+- Criado: CLAUDE.md, .claude/settings.json, .claude/hooks/test-on-edit.sh, .claude/rules/tdd.md, .claude/rules/ia-limites.md.
+- Hook testado à mão: verde = silêncio; vermelho = decision:block com a saída do test.ps1; arquivo fora de src/tests = ignorado.
+- Sem skills/agents do projeto, PreToolUse, Stop, PreCompact, SessionStart (versão enxuta; regras globais já barram git).
+
 ## Próximo passo exato
-- Fase 4 enxuta: CLAUDE.md (<150 linhas, comandos test.ps1/build.ps1 via powershell.exe), rules tdd.md + ia-limites.md, hook PostToolUse rodando test.ps1 ao editar src/tests (conferir code.claude.com/docs/en/hooks antes).
+- Fase 7 enxuta: abrir sessão nova, editar um .cs e confirmar que o hook dispara de verdade; checar CLAUDE.md < 150 linhas e comandos rodando; marcar o bootstrap como concluído.
