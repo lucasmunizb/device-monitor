@@ -1,5 +1,5 @@
 # Estado do bootstrap
-Fase concluída: 4 (.claude/ enxuto)   Próxima: 7 verificação final enxuta (5/6 não se aplicam)   Atualizado: 2026-11-24
+Fase concluída: 7 — BOOTSTRAP CONCLUÍDO   Atualizado: 2026-11-24
 
 ## Decisões tomadas (não reperguntar)
 - Produto: tray pessoal Windows, bateria do mouse DELUX M900 Pro (receptor 1D57:FA65) e headset HyperX Cloud II Core Wireless (03F0:0995). Design: docs/superpowers/specs/2026-11-24-device-monitor-design.md
@@ -33,5 +33,11 @@ Fase concluída: 4 (.claude/ enxuto)   Próxima: 7 verificação final enxuta (5
 - Hook testado à mão: verde = silêncio; vermelho = decision:block com a saída do test.ps1; arquivo fora de src/tests = ignorado.
 - Sem skills/agents do projeto, PreToolUse, Stop, PreCompact, SessionStart (versão enxuta; regras globais já barram git).
 
+## Fase 7 — verificação (2026-11-24)
+- [x] CLAUDE.md 25 linhas; comandos teste e build rodam (OK 33 testes; build gera dist\Instalar-Monitor-de-Bateria.exe).
+- [x] Hook dispara de verdade em sessão nova: Edit quebrando um assert em tests/Tests.cs → bloqueio "FALHA mouse 97: esperado 98, veio 97"; revertido, suíte verde.
+- [x] hooks verificados na doc (ver acima); design e plano da fatia em docs/superpowers/.
+- N/A (versão enxuta): /health, k6, CI, Docker, LGPD, skills/agents do projeto.
+
 ## Próximo passo exato
-- Fase 7 enxuta: abrir sessão nova, editar um .cs e confirmar que o hook dispara de verdade; checar CLAUDE.md < 150 linhas e comandos rodando; marcar o bootstrap como concluído.
+- Bootstrap fechado. Próximas mudanças: branch nova + TDD pelo CLAUDE.md. Pendências do usuário acima continuam valendo.
