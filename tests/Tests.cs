@@ -49,38 +49,23 @@ static class Tests
 
     static void Headset()
     {
-        int mv;
-        var h = Battery.Headset(B(0x66,0x89,0x0F,0xA0,0x50), 62, null, null, false, out mv);
-        Eq(80, h.Percent, "headset 80"); Eq(4000, mv, "mV"); Eq(false, h.Charging, "1a leitura sem raio");
-        // medido 2026-11-24: no cabo em fim de carga sobe só ~4 mV/25 s; sem cabo sempre cai (−24 mV/10 s)
-        Eq(true,  Battery.Headset(B(0x66,0x89,0x10,0x50,0x29), 62, 4172, null, false, out mv).Charging, "fim de carga +4 mV acende raio");
-        Eq(true,  Battery.Headset(B(0x66,0x89,0x0F,0xD9,0x2A), 62, 4031, null, false, out mv).Charging, "início de carga +26 mV raio");
-        Eq(false, Battery.Headset(B(0x66,0x89,0x10,0x23,0x2A), 62, 4129, null, false, out mv).Charging, "+2 mV sem cabo não acende");
-        Eq(true,  Battery.Headset(B(0x66,0x89,0x10,0x4F,0x29), 62, 4175, Charged(41), false, out mv).Charging, "carregando e parado continua raio");
-        Eq(false, Battery.Headset(B(0x66,0x89,0x10,0x39,0x2A), 62, 4177, Charged(42), false, out mv).Charging, "tirou o cabo: caiu apaga raio");
-        Eq(false, Battery.Headset(B(0x66,0x89,0x10,0x21,0x2A), 62, 4129, null, false, out mv).Charging, "parado sem carga sem raio");
-        Eq(false, Battery.Headset(B(0x66,0x89,0x10,0x50,0x29), 62, null, Charged(41), false, out mv).Charging, "sem leitura anterior sem raio");
-        // medido 14:2x: fim de carga a tensão fica parada em 4188-4189 mV; só a % sobe (49 -> 50)
-        Eq(true,  Battery.Headset(B(0x66,0x89,0x10,0x5C,0x32), 62, 4188, P(49), false, out mv).Charging, "parada mas % subiu acende raio");
-        Eq(true,  Battery.Headset(B(0x66,0x89,0x10,0x5C,0x32), 62, 4189, Charged(50), false, out mv).Charging, "carregando oscila -1 mV continua raio");
-        Eq(false, Battery.Headset(B(0x66,0x89,0x10,0x5C,0x31), 62, 4188, P(50), false, out mv).Charging, "% caiu sem raio");
-        // medido: com o cabo USB no PC o headset aparece como 03F0:0795; sem cabo some
-        Eq(true,  Battery.Headset(B(0x66,0x89,0x10,0x5C,0x31), 62, null, null, true, out mv).Charging, "cabo no PC: raio já na 1a leitura");
-        Eq(true,  Battery.Headset(B(0x66,0x89,0x10,0x5B,0x31), 62, 4188, null, true, out mv).Charging, "cabo no PC e tensão oscilando: raio");
-        var cheio = Battery.Headset(B(0x66,0x89,0x10,0x5C,0x64), 62, null, null, true, out mv);
+        var h = Battery.Headset(B(0x66,0x89,0x0F,0xA0,0x50), 62, false);
+        Eq(80, h.Percent, "headset 80"); Eq(false, h.Charging, "sem cabo sem raio");
+        // medido 2026-11-24: com o cabo USB no PC o headset aparece como 03F0:0795; sem cabo some.
+        // A tensão não serve: no fim da carga fica parada e sem cabo cai tão devagar quanto oscila.
+        Eq(true,  Battery.Headset(B(0x66,0x89,0x10,0x5C,0x31), 62, true).Charging, "cabo no PC: raio já na 1a leitura");
+        var cheio = Battery.Headset(B(0x66,0x89,0x10,0x5C,0x64), 62, true);
         Eq(false, cheio.Charging, "cabo no PC com 100%: sem raio"); Eq("Carga completa", cheio.Status, "cabo no PC com 100%: carga completa");
-        var peloCabo = new Reading { Percent = 49, Charging = true, Cable = true };
-        Eq(false, Battery.Headset(B(0x66,0x89,0x10,0x5C,0x31), 62, 4188, peloCabo, false, out mv).Charging, "tirou o cabo do PC: raio apaga na hora");
-        Eq(true,  Battery.Headset(B(0x66,0x89,0x10,0x5C,0x31), 62, null, null, true, out mv).Cable, "leitura guarda que veio do cabo");
-        Eq(null, Battery.Headset(B(0x66,0x89,0x0F,0xA0,0x65), 62, null, null, false, out mv), "PCT > 100");
-        Eq(null, Battery.Headset(B(0x66,0x8A,0x0F,0xA0,0x50), 62, null, null, false, out mv), "outra resposta");
-        Eq(null, Battery.Headset(B(0x66,0x89,0x0F), 3, null, null, false, out mv), "curto");
-        Eq("Carga completa", Battery.Headset(B(0x66,0x89,0x0F,0xA0,0x64), 62, null, null, false, out mv).Status, "headset 100 texto");
+        // bug 2026-11-24: sem cabo, descarregando devagar (3848 -> 3846 mV, 54%), o raio ficou preso
+        Eq(false, Battery.Headset(B(0x66,0x89,0x0F,0x06,0x36), 62, false).Charging, "sem cabo descarregando devagar: sem raio");
+        Eq(null, Battery.Headset(B(0x66,0x89,0x0F,0xA0,0x65), 62, false), "PCT > 100");
+        Eq(null, Battery.Headset(B(0x66,0x8A,0x0F,0xA0,0x50), 62, false), "outra resposta");
+        Eq(null, Battery.Headset(B(0x66,0x89,0x0F), 3, false), "curto");
+        Eq("Carga completa", Battery.Headset(B(0x66,0x89,0x0F,0xA0,0x64), 62, false).Status, "headset 100 texto");
     }
 
     static Reading P(int? pct) { return new Reading { Percent = pct }; }
     static Color[] Col(params Color[] c) { return c; }
-    static Reading Charged(int pct) { return new Reading { Percent = pct, Charging = true }; }
 
     static void Rotulo()
     {

@@ -3,7 +3,6 @@ class Reading
     public int? Percent;
     public bool Charging;
     public bool Full;
-    public bool Cable; // headset: carga vista pelo cabo no PC (03F0:0795), não deduzida pela tensão
     public string Status; // null quando nada a dizer
 }
 
@@ -25,27 +24,17 @@ static class Battery
         }
     }
 
-    // medido 2026-11-24: no cabo a tensão sobe até parar em ~4,19 V (oscila ±1 mV) e a % continua subindo;
-    // sem cabo a tensão cai ~24 mV/10 s e a % só desce
-    public const int ChargeStartMv = 3, ChargeNoiseMv = 3;
-
-    // Resposta do headset a 66 89: 66 89 HI LO PCT (HI<<8|LO = mV). null = resposta que não serve.
-    public static Reading Headset(byte[] r, int n, int? lastMv, Reading last, bool cable, out int mv)
+    // Resposta do headset a 66 89: 66 89 HI LO PCT (HI<<8|LO = mV, não usado). null = resposta que não serve.
+    // Carga = cabo USB no PC (03F0:0795 presente, medido). A tensão não serve: no fim da carga fica parada
+    // e sem cabo cai tão devagar quanto oscila. shortcut: carregador de tomada não mostra raio; medir se for usado.
+    public static Reading Headset(byte[] r, int n, bool cable)
     {
-        mv = 0;
         if (r == null || n < 5 || r.Length < 5 || r[0] != 0x66 || r[1] != 0x89 || r[4] > 100) return null;
-        mv = r[2] << 8 | r[3];
-        // sem indicador de carga no protocolo: tensão ou % subindo acende o raio; aceso, só apaga quando a tensão cai de verdade
-        bool was = last != null && last.Charging && !last.Cable; // tolerância de tensão só para carga deduzida
-        int delta = lastMv == null ? 0 : mv - lastMv.Value;
         return new Reading
         {
             Percent = r[4],
-            // cabo no PC = certeza; senão (carregador de tomada) deduz pela tensão/%. Com 100% vira "Carga completa"
-            Charging = r[4] < 100 && (cable || lastMv != null && (delta >= (was ? -ChargeNoiseMv : ChargeStartMv)
-                || (last != null && last.Percent != null && r[4] > last.Percent))),
+            Charging = cable && r[4] < 100, // com 100% vira "Carga completa", como o mouse
             Full = r[4] == 100,
-            Cable = cable,
             Status = r[4] == 100 ? "Carga completa" : null
         };
     }
