@@ -10,6 +10,10 @@ class Tray : IDisposable
     readonly Devices devices;
     readonly Control ui = new Control();
     readonly Slot mouse, headset;
+    readonly Strip strip;
+    readonly Timer swap = new Timer { Interval = 1000 };
+    DateTime? missingSince;
+    readonly DeviceChanges usb;
 
     public Tray(Devices devices)
     {
@@ -17,8 +21,13 @@ class Tray : IDisposable
         var forceHandle = ui.Handle; // BeginInvoke precisa do handle criado na thread da UI
         mouse = new Slot("Mouse", this);
         headset = new Slot("Headset", this);
+        strip = new Strip(Menu(new ToolStripMenuItem { Visible = false })); // status já vai no tooltip da faixa
+        swap.Tick += delegate { Swap(); };
+        swap.Start();
+        Swap();
         devices.MouseChanged += OnMouse;
         devices.HeadsetChanged += OnHeadset;
+        usb = new DeviceChanges(devices.RefreshNow); // cabo entrou/saiu: relê o headset na hora, sem esperar 30 s
 
         // Explorer cria a entrada do ícone só depois de ele aparecer; espera um pouco antes de promover
         var promote = new Timer { Interval = 5000 };
@@ -30,8 +39,18 @@ class Tray : IDisposable
         promote.Start();
     }
 
-    void OnMouse(Reading r) { Post(() => mouse.Show(r)); }
-    void OnHeadset(Reading r) { Post(() => headset.Show(r)); }
+    void OnMouse(Reading r) { Post(() => strip.SetReading("Mouse", r, mouse.Show(r))); }
+    void OnHeadset(Reading r) { Post(() => strip.SetReading("Headset", r, headset.Show(r))); }
+
+    // faixa presa na barra = ícones escondidos; barra sumida por 10 s = ícones de volta
+    void Swap()
+    {
+        if (strip.Attached) missingSince = null;
+        else if (missingSince == null) missingSince = DateTime.Now;
+        bool icons = StripRules.IconsVisible(missingSince, DateTime.Now);
+        mouse.Visible = icons;
+        headset.Visible = icons;
+    }
 
     // leitura que chega durante o Sair (handle já destruído) é descartada, não derruba o processo
     void Post(Action a)
@@ -57,6 +76,9 @@ class Tray : IDisposable
         devices.MouseChanged -= OnMouse;
         devices.HeadsetChanged -= OnHeadset;
         devices.Stop();
+        usb.Dispose();
+        swap.Dispose();
+        strip.Dispose();
         mouse.Dispose();
         headset.Dispose();
     }
@@ -72,10 +94,12 @@ class Tray : IDisposable
             this.name = name;
             icon.ContextMenuStrip = tray.Menu(status);
             Show(null);
-            icon.Visible = true;
         }
 
-        public void Show(Reading r)
+        public bool Visible { set { icon.Visible = value; } }
+
+        // devolve o texto completo (tooltip da faixa); o do ícone é cortado em 63
+        public string Show(Reading r)
         {
             string text = name + " " + (r != null && r.Percent != null ? r.Percent + "%" : "—");
             if (r != null && r.Charging) text += " (carregando)";
@@ -87,6 +111,7 @@ class Tray : IDisposable
             var old = icon.Icon;
             icon.Icon = Draw(Battery.Label(r), Battery.Low(r), r != null && r.Charging);
             if (old != null) { DestroyIcon(old.Handle); old.Dispose(); }
+            return text;
         }
 
         public void Dispose()
@@ -126,4 +151,25 @@ class Tray : IDisposable
 
     [DllImport("user32.dll")]
     static extern bool DestroyIcon(IntPtr handle);
+}
+
+// Janela invisível de topo: o Windows avisa todas elas (WM_DEVICECHANGE) quando um aparelho USB entra ou sai.
+class DeviceChanges : NativeWindow, IDisposable
+{
+    const int WM_DEVICECHANGE = 0x0219;
+    readonly Action changed;
+
+    public DeviceChanges(Action changed)
+    {
+        this.changed = changed;
+        CreateHandle(new CreateParams());
+    }
+
+    protected override void WndProc(ref Message m)
+    {
+        if (m.Msg == WM_DEVICECHANGE) changed();
+        base.WndProc(ref m);
+    }
+
+    public void Dispose() { DestroyHandle(); }
 }

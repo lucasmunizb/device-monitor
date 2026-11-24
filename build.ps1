@@ -6,11 +6,11 @@ $csc = "$env:WINDIR\Microsoft.NET\Framework64\v4.0.30319\csc.exe"
 $dir = Join-Path $env:TEMP 'devmon-app'
 if (Test-Path $dir) { Remove-Item $dir -Recurse -Force }
 New-Item -ItemType Directory $dir | Out-Null
-Copy-Item "$PSScriptRoot\src\*.cs" $dir
+Copy-Item "$PSScriptRoot\src\*.cs", "$PSScriptRoot\src\app.manifest" $dir
 $exe = 'Instalar-Monitor-de-Bateria.exe'
 Push-Location $dir
 try {
-  & $csc /nologo /codepage:65001 /target:winexe /optimize+ "/out:$exe" *.cs
+  & $csc /nologo /codepage:65001 /target:winexe /optimize+ /win32manifest:app.manifest "/out:$exe" *.cs
   if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 } finally { Pop-Location }
 New-Item -ItemType Directory "$PSScriptRoot\dist" -Force | Out-Null

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 
 static class Tests
 {
@@ -20,6 +21,7 @@ static class Tests
         Mouse();
         Headset();
         Rotulo();
+        Faixa();
         Instalador();
         if (falhas.Count > 0)
         {
@@ -48,18 +50,37 @@ static class Tests
     static void Headset()
     {
         int mv;
-        var h = Battery.Headset(B(0x66,0x89,0x0F,0xA0,0x50), 62, null, out mv);
+        var h = Battery.Headset(B(0x66,0x89,0x0F,0xA0,0x50), 62, null, null, false, out mv);
         Eq(80, h.Percent, "headset 80"); Eq(4000, mv, "mV"); Eq(false, h.Charging, "1a leitura sem raio");
-        Eq(true,  Battery.Headset(B(0x66,0x89,0x0F,0xAF,0x50), 62, 4000, out mv).Charging, "+15 mV raio");
-        Eq(false, Battery.Headset(B(0x66,0x89,0x0F,0xAE,0x50), 62, 4000, out mv).Charging, "+14 mV sem raio");
-        Eq(false, Battery.Headset(B(0x66,0x89,0x0F,0x90,0x50), 62, 4000, out mv).Charging, "caiu sem raio");
-        Eq(null, Battery.Headset(B(0x66,0x89,0x0F,0xA0,0x65), 62, null, out mv), "PCT > 100");
-        Eq(null, Battery.Headset(B(0x66,0x8A,0x0F,0xA0,0x50), 62, null, out mv), "outra resposta");
-        Eq(null, Battery.Headset(B(0x66,0x89,0x0F), 3, null, out mv), "curto");
-        Eq("Carga completa", Battery.Headset(B(0x66,0x89,0x0F,0xA0,0x64), 62, null, out mv).Status, "headset 100 texto");
+        // medido 2026-11-24: no cabo em fim de carga sobe só ~4 mV/25 s; sem cabo sempre cai (−24 mV/10 s)
+        Eq(true,  Battery.Headset(B(0x66,0x89,0x10,0x50,0x29), 62, 4172, null, false, out mv).Charging, "fim de carga +4 mV acende raio");
+        Eq(true,  Battery.Headset(B(0x66,0x89,0x0F,0xD9,0x2A), 62, 4031, null, false, out mv).Charging, "início de carga +26 mV raio");
+        Eq(false, Battery.Headset(B(0x66,0x89,0x10,0x23,0x2A), 62, 4129, null, false, out mv).Charging, "+2 mV sem cabo não acende");
+        Eq(true,  Battery.Headset(B(0x66,0x89,0x10,0x4F,0x29), 62, 4175, Charged(41), false, out mv).Charging, "carregando e parado continua raio");
+        Eq(false, Battery.Headset(B(0x66,0x89,0x10,0x39,0x2A), 62, 4177, Charged(42), false, out mv).Charging, "tirou o cabo: caiu apaga raio");
+        Eq(false, Battery.Headset(B(0x66,0x89,0x10,0x21,0x2A), 62, 4129, null, false, out mv).Charging, "parado sem carga sem raio");
+        Eq(false, Battery.Headset(B(0x66,0x89,0x10,0x50,0x29), 62, null, Charged(41), false, out mv).Charging, "sem leitura anterior sem raio");
+        // medido 14:2x: fim de carga a tensão fica parada em 4188-4189 mV; só a % sobe (49 -> 50)
+        Eq(true,  Battery.Headset(B(0x66,0x89,0x10,0x5C,0x32), 62, 4188, P(49), false, out mv).Charging, "parada mas % subiu acende raio");
+        Eq(true,  Battery.Headset(B(0x66,0x89,0x10,0x5C,0x32), 62, 4189, Charged(50), false, out mv).Charging, "carregando oscila -1 mV continua raio");
+        Eq(false, Battery.Headset(B(0x66,0x89,0x10,0x5C,0x31), 62, 4188, P(50), false, out mv).Charging, "% caiu sem raio");
+        // medido: com o cabo USB no PC o headset aparece como 03F0:0795; sem cabo some
+        Eq(true,  Battery.Headset(B(0x66,0x89,0x10,0x5C,0x31), 62, null, null, true, out mv).Charging, "cabo no PC: raio já na 1a leitura");
+        Eq(true,  Battery.Headset(B(0x66,0x89,0x10,0x5B,0x31), 62, 4188, null, true, out mv).Charging, "cabo no PC e tensão oscilando: raio");
+        var cheio = Battery.Headset(B(0x66,0x89,0x10,0x5C,0x64), 62, null, null, true, out mv);
+        Eq(false, cheio.Charging, "cabo no PC com 100%: sem raio"); Eq("Carga completa", cheio.Status, "cabo no PC com 100%: carga completa");
+        var peloCabo = new Reading { Percent = 49, Charging = true, Cable = true };
+        Eq(false, Battery.Headset(B(0x66,0x89,0x10,0x5C,0x31), 62, 4188, peloCabo, false, out mv).Charging, "tirou o cabo do PC: raio apaga na hora");
+        Eq(true,  Battery.Headset(B(0x66,0x89,0x10,0x5C,0x31), 62, null, null, true, out mv).Cable, "leitura guarda que veio do cabo");
+        Eq(null, Battery.Headset(B(0x66,0x89,0x0F,0xA0,0x65), 62, null, null, false, out mv), "PCT > 100");
+        Eq(null, Battery.Headset(B(0x66,0x8A,0x0F,0xA0,0x50), 62, null, null, false, out mv), "outra resposta");
+        Eq(null, Battery.Headset(B(0x66,0x89,0x0F), 3, null, null, false, out mv), "curto");
+        Eq("Carga completa", Battery.Headset(B(0x66,0x89,0x0F,0xA0,0x64), 62, null, null, false, out mv).Status, "headset 100 texto");
     }
 
     static Reading P(int? pct) { return new Reading { Percent = pct }; }
+    static Color[] Col(params Color[] c) { return c; }
+    static Reading Charged(int pct) { return new Reading { Percent = pct, Charging = true }; }
 
     static void Rotulo()
     {
@@ -71,6 +92,40 @@ static class Tests
         Eq(false, Battery.Low(P(21)), "21 ok");
         Eq(false, Battery.Low(Battery.Missing()), "ausente não é baixo");
         Eq(false, Battery.Low(null), "null não é baixo");
+    }
+
+    static void Faixa()
+    {
+        Eq(Level.Low,  Battery.LevelOf(P(0)),   "0 vermelho");
+        Eq(Level.Low,  Battery.LevelOf(P(20)),  "20 vermelho");
+        Eq(Level.Mid,  Battery.LevelOf(P(21)),  "21 amarelo");
+        Eq(Level.Mid,  Battery.LevelOf(P(60)),  "60 amarelo");
+        Eq(Level.High, Battery.LevelOf(P(61)),  "61 verde");
+        Eq(Level.High, Battery.LevelOf(P(100)), "100 verde");
+        Eq(Level.None, Battery.LevelOf(P(null)), "sem % cinza");
+        Eq(Level.None, Battery.LevelOf(null),   "sem leitura cinza");
+        Eq(Level.None, Battery.LevelOf(Battery.Missing()), "receptor ausente cinza");
+        Eq("70%", Battery.PercentText(P(70)), "texto 70%");
+        Eq("—",   Battery.PercentText(null),  "texto sem leitura");
+        Eq("—",   Battery.PercentText(new Reading { Charging = true }), "carregando sem % traço");
+
+        // barra e bandeja medidas na máquina em 2026-11-24
+        var bar = new Rectangle(0, 1032, 2560, 48); var tray = new Rectangle(2206, 1032, 354, 48);
+        Eq((Rectangle?)new Rectangle(2206 - 140 - 4, 4, 140, 40), StripRules.Place(bar, tray, new Size(140, 40)), "colada à bandeja");
+        Eq(null, StripRules.Place(new Rectangle(0, 0, 48, 1080), new Rectangle(0, 900, 48, 180), new Size(140, 40)), "barra vertical");
+        Eq(null, StripRules.Place(bar, new Rectangle(100, 1032, 50, 48), new Size(140, 40)), "sem espaço");
+        Eq(null, StripRules.Place(bar, new Rectangle(0, 0, 0, 0), new Size(140, 40)), "bandeja fora da barra");
+        var t0 = new DateTime(2026, 11, 24, 12, 0, 0);
+        Eq(false, StripRules.IconsVisible(null, t0), "barra presente");
+        Eq(false, StripRules.IconsVisible(t0, t0.AddSeconds(9)), "explorer reiniciando não pisca");
+        Eq(true,  StripRules.IconsVisible(t0, t0.AddSeconds(10)), "10 s sem barra: ícones");
+
+        // fundo copiado da barra: aceita só o que parece barra (dica/menu por cima não vira fundo)
+        Eq(true,  StripRules.LooksLikeBar(Col(Color.FromArgb(28, 32, 44), Color.FromArgb(30, 34, 46)), false), "barra escura");
+        Eq(false, StripRules.LooksLikeBar(Col(Color.FromArgb(249, 249, 249), Color.FromArgb(40, 40, 40), Color.FromArgb(249, 249, 249)), false), "dica com texto por cima");
+        Eq(false, StripRules.LooksLikeBar(Col(Color.FromArgb(243, 243, 243), Color.FromArgb(243, 243, 243)), false), "janela clara sobre barra escura");
+        Eq(true,  StripRules.LooksLikeBar(Col(Color.FromArgb(238, 238, 238), Color.FromArgb(236, 236, 236)), true), "barra clara");
+        Eq(false, StripRules.LooksLikeBar(Col(Color.FromArgb(32, 32, 32), Color.FromArgb(32, 32, 32)), true), "janela escura sobre barra clara");
     }
 
     static void Instalador()

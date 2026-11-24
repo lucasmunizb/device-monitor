@@ -10,9 +10,11 @@ O exe não é assinado: no primeiro clique o Windows mostra "O Windows protegeu 
 
 A instalação copia o programa para `%LOCALAPPDATA%\MonitorDeBateria`, cria o atalho no Menu Iniciar e liga "Iniciar com o Windows". Para atualizar, baixe e clique de novo.
 
-No Windows 11 os dois ícones (mouse e headset) aparecem direto na barra, fora do `^`. Para esconder, arraste o ícone para o `^`: o monitor respeita essa escolha.
+A bateria aparece na barra de tarefas, à esquerda da bandeja: `🎧 70%  🖱 86%`. Vermelho = 0–20%, amarelo = 21–60%, verde = 61–100%, raio = carregando, `—` = sem leitura. Passe o mouse para ver o detalhe.
 
-Clique direito no ícone: **Atualizar**, **Iniciar com o Windows**, **Sair**. Número vermelho = 20% ou menos; raio = carregando.
+Clique direito na faixa: **Atualizar**, **Iniciar com o Windows**, **Sair**.
+
+Se o Windows mudar e a barra não for encontrada, o monitor volta a mostrar dois ícones na bandeja (número vermelho = 20% ou menos; raio = carregando).
 
 ## Desinstalar
 

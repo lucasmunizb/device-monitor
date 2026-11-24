@@ -3,8 +3,11 @@ class Reading
     public int? Percent;
     public bool Charging;
     public bool Full;
+    public bool Cable; // headset: carga vista pelo cabo no PC (03F0:0795), não deduzida pela tensão
     public string Status; // null quando nada a dizer
 }
+
+enum Level { None, Low, Mid, High }
 
 static class Battery
 {
@@ -22,20 +25,27 @@ static class Battery
         }
     }
 
-    public const int ChargeRiseMv = 15;
+    // medido 2026-11-24: no cabo a tensão sobe até parar em ~4,19 V (oscila ±1 mV) e a % continua subindo;
+    // sem cabo a tensão cai ~24 mV/10 s e a % só desce
+    public const int ChargeStartMv = 3, ChargeNoiseMv = 3;
 
     // Resposta do headset a 66 89: 66 89 HI LO PCT (HI<<8|LO = mV). null = resposta que não serve.
-    public static Reading Headset(byte[] r, int n, int? lastMv, out int mv)
+    public static Reading Headset(byte[] r, int n, int? lastMv, Reading last, bool cable, out int mv)
     {
         mv = 0;
         if (r == null || n < 5 || r.Length < 5 || r[0] != 0x66 || r[1] != 0x89 || r[4] > 100) return null;
         mv = r[2] << 8 | r[3];
-        // sem indicador de carga no protocolo: tensão subindo = no cabo
+        // sem indicador de carga no protocolo: tensão ou % subindo acende o raio; aceso, só apaga quando a tensão cai de verdade
+        bool was = last != null && last.Charging && !last.Cable; // tolerância de tensão só para carga deduzida
+        int delta = lastMv == null ? 0 : mv - lastMv.Value;
         return new Reading
         {
             Percent = r[4],
-            Charging = lastMv != null && mv - lastMv.Value >= ChargeRiseMv,
+            // cabo no PC = certeza; senão (carregador de tomada) deduz pela tensão/%. Com 100% vira "Carga completa"
+            Charging = r[4] < 100 && (cable || lastMv != null && (delta >= (was ? -ChargeNoiseMv : ChargeStartMv)
+                || (last != null && last.Percent != null && r[4] > last.Percent))),
             Full = r[4] == 100,
+            Cable = cable,
             Status = r[4] == 100 ? "Carga completa" : null
         };
     }
@@ -48,4 +58,16 @@ static class Battery
     }
 
     public static bool Low(Reading r) { return r != null && r.Percent <= 20; }
+
+    // cor da faixa: vermelho 0–20, amarelo 21–60, verde 61–100
+    public static Level LevelOf(Reading r)
+    {
+        if (r == null || r.Percent == null) return Level.None;
+        return r.Percent <= 20 ? Level.Low : r.Percent <= 60 ? Level.Mid : Level.High;
+    }
+
+    public static string PercentText(Reading r)
+    {
+        return r == null || r.Percent == null ? "—" : r.Percent + "%";
+    }
 }

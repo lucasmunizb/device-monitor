@@ -6,6 +6,7 @@ class Devices
 {
     const string MouseCable = "vid_1d57&pid_fa73&", MouseReceiver = "vid_1d57&pid_fa65&";
     const string HeadsetId = "vid_03f0&pid_0995&";
+    const string HeadsetCable = "vid_03f0&pid_0795&"; // medido: só existe com o cabo USB do headset no PC
 
     public event Action<Reading> MouseChanged, HeadsetChanged;
 
@@ -14,6 +15,7 @@ class Devices
     readonly object headsetLock = new object();
     Reading lastMouse;
     int? lastMv;
+    Reading lastHeadset;
 
     public void Start()
     {
@@ -75,10 +77,11 @@ class Devices
                         Hid.Transfer(h, q, true, 500);
                         var r = new byte[d.Caps.Input];
                         int n, mv;
+                        bool cable = Hid.Find(HeadsetCable).Any();
                         // pode chegar outro report antes da resposta
                         for (int i = 0; i < 5 && result == null && (n = Hid.Transfer(h, r, false, 1500)) > 0; i++)
                         {
-                            result = Battery.Headset(r, n, lastMv, out mv);
+                            result = Battery.Headset(r, n, lastMv, lastHeadset, cable, out mv);
                             if (result != null) lastMv = mv;
                         }
                         if (result == null) result = new Reading { Status = "Sem leitura" };
@@ -86,6 +89,7 @@ class Devices
             }
             catch (Exception) { }
             if (result == null) { result = Battery.Missing(); lastMv = null; }
+            lastHeadset = result;
             Fire(HeadsetChanged, result);
         }
     }
