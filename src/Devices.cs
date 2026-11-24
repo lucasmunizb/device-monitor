@@ -14,8 +14,6 @@ class Devices
     Timer headsetTimer;
     readonly object headsetLock = new object();
     Reading lastMouse;
-    int? lastMv;
-    Reading lastHeadset;
 
     public void Start()
     {
@@ -76,20 +74,16 @@ class Devices
                         q[0] = 0x66; q[1] = 0x89;
                         Hid.Transfer(h, q, true, 500);
                         var r = new byte[d.Caps.Input];
-                        int n, mv;
+                        int n;
                         bool cable = Hid.Find(HeadsetCable).Any();
                         // pode chegar outro report antes da resposta
                         for (int i = 0; i < 5 && result == null && (n = Hid.Transfer(h, r, false, 1500)) > 0; i++)
-                        {
-                            result = Battery.Headset(r, n, lastMv, lastHeadset, cable, out mv);
-                            if (result != null) lastMv = mv;
-                        }
+                            result = Battery.Headset(r, n, cable);
                         if (result == null) result = new Reading { Status = "Sem leitura" };
                     }
             }
             catch (Exception) { }
-            if (result == null) { result = Battery.Missing(); lastMv = null; }
-            lastHeadset = result;
+            if (result == null) result = Battery.Missing();
             Fire(HeadsetChanged, result);
         }
     }
