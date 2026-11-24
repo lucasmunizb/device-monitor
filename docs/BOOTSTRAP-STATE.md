@@ -1,5 +1,5 @@
 # Estado do bootstrap
-Fase concluída: 2 (design aprovado)   Próxima: 2b plano → 3 código   Atualizado: 2026-11-24
+Fase concluída: 2 (design + plano)   Próxima: 3 código (Task 1 do plano)   Atualizado: 2026-11-24
 
 ## Decisões tomadas (não reperguntar)
 - Produto: tray pessoal Windows, bateria do mouse DELUX M900 Pro (receptor 1D57:FA65) e headset HyperX Cloud II Core Wireless (03F0:0995). Design: docs/superpowers/specs/2026-11-24-device-monitor-design.md
@@ -22,4 +22,4 @@ Fase concluída: 2 (design aprovado)   Próxima: 2b plano → 3 código   Atuali
 - nada ainda (hooks da Fase 4 vão exigir code.claude.com/docs/en/hooks)
 
 ## Próximo passo exato
-- superpowers:writing-plans só para a primeira fatia → docs/superpowers/plans/2026-11-24-device-monitor.md; depois Fase 3 começando pelos testes dos parsers (critérios 1–7).
+- Plano em docs/superpowers/plans/2026-11-24-device-monitor.md aguardando OK do usuário e escolha de execução; depois Task 1 (test.ps1 + parser do mouse).
