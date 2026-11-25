@@ -203,8 +203,17 @@ class Strip : Form
     bool SampleBackground(Rectangle trayScreen, int top, int height)
     {
         var col = new Bitmap(1, height, PixelFormat.Format24bppRgb);
-        using (var g = Graphics.FromImage(col))
-            g.CopyFromScreen(trayScreen.Left - StripRules.Gap / 2, top, 0, 0, col.Size);
+        try
+        {
+            using (var g = Graphics.FromImage(col))
+                g.CopyFromScreen(trayScreen.Left - StripRules.Gap / 2, top, 0, 0, col.Size);
+        }
+        catch (System.ComponentModel.Win32Exception)
+        {
+            // tela bloqueada, UAC ou RDP desconectado: sem DC da tela; mantém o fundo e tenta no próximo tick
+            col.Dispose();
+            return false;
+        }
         var pixels = new Color[height];
         for (int y = 0; y < height; y++) pixels[y] = col.GetPixel(0, y);
         if (!StripRules.LooksLikeBar(pixels, LightTheme())) { col.Dispose(); return false; } // mantém o fundo anterior
